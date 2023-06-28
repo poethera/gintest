@@ -99,3 +99,46 @@ func ChunkedResText(c *gin.Context) {
 	fmt.Fprintf(w, "chunked end")
 	w.Flush()
 }
+
+func ChunkedResAsync(c *gin.Context) {
+	// c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin")
+	// c.Header("Access-Control-Allow-Credentials", "true")
+	// c.Header("Access-Control-Allow-Origin", "http://localhost:3000")
+	// c.Header("Access-Control-Allow-Methods", "GET, DELETE, POST")
+	// c.Next() //?
+
+	w := c.Writer
+
+	complete := make(chan int)
+	defer close(complete)
+
+	//ccp := c.Copy()
+
+	go func() {
+
+		w.Header().Set("Transfer-Encoding", "chunked")
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+
+		//fmt.Fprintf(w, "chunked start")
+		w.Flush()
+
+		for i := 0; i < 100000; i++ {
+			fmt.Fprintf(w, "chunked %d", i)
+			w.Flush()
+			//fmt.Println("flushed...")
+			//time.Sleep(time.Duration(1) * time.Second)
+		}
+
+		fmt.Fprintf(w, "chunked end")
+		w.Flush()
+
+		//fmt.Println("call complete")
+		complete <- 1
+	}()
+
+	//wait
+	//fmt.Println("waiting for complete call")
+	<-complete
+	//fmt.Println("complete..")
+}
